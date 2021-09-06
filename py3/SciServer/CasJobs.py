@@ -8,6 +8,7 @@ import requests as requests
 import pandas
 
 from SciServer import Authentication, Config
+from SciServer.TLSAdapter import get_session
 
 
 class Task:
@@ -78,7 +79,11 @@ def getTables(context="MyDB"):
 
         headers={'X-Auth-Token': token,'Content-Type': 'application/json'}
 
-        getResponse = requests.get(TablesUrl,headers=headers)
+        try:
+            getResponse = requests.get(TablesUrl,headers=headers)
+        except requests.exceptions.SSLError:
+            session = get_session()
+            getResponse = session.get(TablesUrl,headers=headers)
 
         if getResponse.status_code != 200:
             raise Exception("Error when getting table description from database context " + str(context) + ".\nHttp Response from CasJobs API returned status code " + str(getResponse.status_code) + ":\n" + getResponse.content.decode());
@@ -144,7 +149,12 @@ def executeQuery(sql, context="MyDB", format="pandas"):
     if token is not None and token != "":
         headers['X-Auth-Token'] = token
 
-    postResponse = requests.post(QueryUrl,data=data,headers=headers, stream=True)
+    try:
+        postResponse = requests.post(QueryUrl,data=data,headers=headers, stream=True)
+    except requests.exceptions.SSLError:
+        s = get_session()
+        postResponse = s.post(QueryUrl,data=data,headers=headers, stream=True)
+
     if postResponse.status_code != 200:
         raise Exception("Error when executing query. Http Response from CasJobs API returned status code " + str(postResponse.status_code) + ":\n" + postResponse.content.decode());
 
@@ -204,8 +214,12 @@ def submitJob(sql, context="MyDB"):
         headers = {'Content-Type': 'application/json', 'Accept': "text/plain"}
         headers['X-Auth-Token']=  token
 
+        try:
+            putResponse = requests.put(QueryUrl,data=data,headers=headers)
+        except requests.exceptions.SSLError:
+            session = get_session()
+            putResponse = session.put(QueryUrl,data=data,headers=headers)
 
-        putResponse = requests.put(QueryUrl,data=data,headers=headers)
         if putResponse.status_code != 200:
             raise Exception("Error when submitting a job. Http Response from CasJobs API returned status code " + str(putResponse.status_code) + ":\n" + putResponse.content.decode());
 
@@ -238,7 +252,12 @@ def getJobStatus(jobId):
 
         headers={'X-Auth-Token': token,'Content-Type': 'application/json'}
 
-        postResponse =requests.get(QueryUrl,headers=headers)
+        try:
+            postResponse = requests.get(QueryUrl,headers=headers)
+        except requests.exceptions.SSLError:
+            s = get_session()
+            postResponse = s.get(QueryUrl,headers=headers)
+
         if postResponse.status_code != 200:
             raise Exception("Error when getting the status of job " + str(jobId) + ".\nHttp Response from CasJobs API returned status code " + str(postResponse.status_code) + ":\n" + postResponse.content.decode());
 
