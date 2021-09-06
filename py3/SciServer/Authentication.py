@@ -8,6 +8,7 @@ import os.path
 import warnings
 import getpass
 from SciServer import Config
+from SciServer.TLSAdapter import get_session
 
 
 
@@ -57,7 +58,8 @@ def getKeystoneUserWithToken(token):
 
         loginURL = loginURL + token + "?TaskName=" + taskName;
 
-        getResponse = requests.get(loginURL)
+        session = get_session()
+        getResponse = session.get(loginURL)
         if getResponse.status_code != 200:
             raise Exception("Error when getting the keystone user with token " + str(token) +".\nHttp Response from the Authentication API returned status code " + str(getResponse.status_code) + ":\n" + getResponse.content.decode());
 
