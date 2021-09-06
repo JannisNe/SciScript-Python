@@ -8,6 +8,7 @@ from io import StringIO
 from io import BytesIO
 
 from SciServer import Authentication, Config
+from SciServer.TLSAdapter import get_session
 
 def sqlSearch(sql, dataRelease=None):
     """
@@ -125,7 +126,12 @@ def getJpegImgCutout(ra, dec, scale=0.7, width=512, height=512, opt="", query=""
     if token is not None and token != "":
         headers['X-Auth-Token'] = token
 
-    response = requests.get(url,headers=headers, stream=True)
+    try:
+        response = requests.get(url,headers=headers, stream=True)
+    except requests.exceptions.SSLError:
+        s = get_session()
+        response = s.get(url,headers=headers, stream=True)
+
     if response.status_code != 200:
         if response.status_code == 404 or response.status_code == 500:
             raise Exception("Error when getting an image cutout.\nHttp Response from SkyServer API returned status code " + str(response.status_code) + ". " + response.reason);
