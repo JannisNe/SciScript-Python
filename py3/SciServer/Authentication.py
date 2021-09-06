@@ -116,7 +116,12 @@ def login(UserName=None, Password=None):
 
     headers={'Content-Type': "application/json"}
 
-    postResponse = requests.post(loginURL,data=data,headers=headers)
+    try:
+        postResponse = requests.post(loginURL,data=data,headers=headers)
+    except requests.exceptions.SSLError:
+        session = get_session()
+        postResponse = session.post(loginURL,data=data,headers=headers)
+
     if postResponse.status_code != 200:
         raise Exception("Error when logging in. Http Response from the Authentication API returned status code " + str(postResponse.status_code) + ":\n" + postResponse.content.decode());
 
